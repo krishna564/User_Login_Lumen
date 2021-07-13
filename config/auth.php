@@ -3,11 +3,11 @@
 return[
 
 	'defaults' =>[
-		'gaurd' => 'api',
+		'guard' => 'api',
 		'passwords' => 'users',
 	],
 
-	'gaurds' =>[
+	'guards' =>[
 		'api' => [
 	        'driver' => 'jwt',
 	        'provider' => 'users',
@@ -20,5 +20,14 @@ return[
             'model' => App\Models\User::class,
         ],
     ],
+
+    'passwords' => [
+	    'users' => [
+	        'provider' => 'users',
+	        'email' => 'auth.emails.password',
+	        'table' => 'passwords_resets',
+	        'expire' => 60,
+	    ],
+	]
 
 ];

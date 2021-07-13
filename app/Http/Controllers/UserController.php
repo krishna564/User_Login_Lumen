@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exception\HttpResponseException;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -59,17 +60,6 @@ class UserController extends Controller
     }
 
     public function login(Request $request){
-        // $this->validate($request, [
-        //     'username' => 'required|string',
-        //     'password' => 'required|string',
-        // ]);
-
-        // $input = $request->only('username','password');
-
-        // if(! $token = auth()->attempt($input)){
-        //     return response()->json(['error' => 'Unauthorized'], 401);
-        // }
-        // return $this->respondWithToken($token);
 
         try {
             $this->validate($request,[
@@ -106,7 +96,7 @@ class UserController extends Controller
         ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    protected function onAuthorized(){
+    protected function onAuthorized($token){
         return new JsonResponse([
             'message' => 'token_generated',
             'data' => [
@@ -118,12 +108,10 @@ class UserController extends Controller
     protected function getCredentials(Request $request){
         return $request->only('email', 'password');
     }
-    // public function respondWithToken($token){
-    //     return response()->json([
-    //         'access_token' => $token,
-    //         'token_type' => 'bearer',
-    //         'expires_in' => auth()->factory()->getTTL() * 60
-    //     ]);
-    // }
+
+    public function me()
+    {
+        return response()->json(auth()->user());
+    }
       
 }

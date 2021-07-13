@@ -9,10 +9,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Lumen\Auth\Authorizable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Notifications\Notifiable;
 
-class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
+class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject, CanResetPasswordContract
 {
-    use Authenticatable, Authorizable, HasFactory;
+    use Authenticatable, Authorizable, HasFactory, CanResetPassword, Notifiable;
 
     /**
      * The attributes that are mass assignable.
