@@ -68,7 +68,7 @@ class PasswordController extends Controller
 		$response = Password::broker($broker)->reset($credentials, function ($user, $password) {
             $this->resetPassword($user, $password);
         });
-
+        // dd($response);
         switch ($response) {
         	case Password::PASSWORD_RESET:
         		return $this->getResetSuccessRespone($response);

@@ -20,6 +20,17 @@ $router->get('/', function () use ($router) {
 
 $router->post('users/login', 'UserController@login');
 $router->post('users/register','UserController@register');
+$router->get('users/register/verification/{token}', 'UserController@verifyEmail');
 $router->get('users/me', 'UserController@me');
+$router->post('users/logout', 'UserController@logout');
 
-$router->post('password/email', 'PasswordController@postEmail');
+$router->post('password/email', [
+    'as' => 'password.reset', 'uses' => 'PasswordController@postEmail'
+]);
+$router->post('password/reset','PasswordController@postReset');
+$router->get('users/{id}', 'UserController@singleUser');
+$router->put('users/edit', 'UserController@editUser');
+$router->post('users/adduser', 'UserController@addUser');
+$router->delete('users/delete/{id}', 'UserController@deleteUser');
+$router->get('users/get/all', 'UserController@allUsers');
+$router->get('users/list/{method}/{value}', 'UserController@listUsers');
