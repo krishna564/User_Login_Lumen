@@ -26,7 +26,7 @@ class UserController extends Controller
     public function __construct()
     {
         //
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'verifyEmail']]);
     }
 
     //
@@ -35,7 +35,10 @@ class UserController extends Controller
 
         $this->validate($request,[
             'username' => 'required|string',
-            'password' => 'required|confirmed',
+            'password' => 'required|
+                           confirmed|
+                           min:8|
+                           regex:/^.*(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@&^*$#()_?><{}\-%]).*$/',
             'email' => 'required|email|unique:users'
         ]);
 
@@ -53,7 +56,7 @@ class UserController extends Controller
             $user->save();
 
 
-            return response()->json(['user' => $user, 'message' => 'CREATED'], 201);
+            return response()->json(['user' => $user, 'message' => 'CREATED'], 200);
 
         } catch (\Exception $e) {
 
@@ -79,15 +82,10 @@ class UserController extends Controller
 
     public function login(Request $request){
 
-        try {
-            $this->validate($request,[
-                'email' => 'required|email',
-                'password' => 'required',
-            ]);
-            
-        } catch (ValidationException $e) {
-            return $e->getResponse();
-        }
+        $this->validate($request,[
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
         try {
 
@@ -100,6 +98,12 @@ class UserController extends Controller
         }
 
         $user = User::where('email', $request->input('email'))->first();
+
+        // if(!($user->isVerified)){
+        //     return response()->json([
+        //         'message' => 'Email is not Verified'
+        //     ],403);
+        // }
         $user->auth_token = $token;
         $user->save();
 
@@ -163,13 +167,6 @@ class UserController extends Controller
             'username' => 'required',
         ]);
 
-        $token = substr($request->header('Authorization'), 7);
-        $request_user = User::where('auth_token', $token)->first();
-
-        if($request_user['roles'] != 'Admin'){
-            return response()->json(['message' => 'Not Authorized']);
-        }
-
         $user = User::where('email', $request->input('email'))->first();
         $user->username = $request->input('username');
 
@@ -180,19 +177,13 @@ class UserController extends Controller
 
     public function deleteUser(Request $request, $id)
     {
-        $token = substr($request->header('Authorization'), 7);
-        $request_user = User::where('auth_token', $token)->first();
-
-        if($request_user['roles'] != 'Admin'){
-            return response()->json(['message' => 'Not Authorized']);
-        }
-
+        
         try{
             $user = User::findOrFail($id);
 
             $user->delete();
 
-            return response()->json(['message', 'Deleted the user']);
+            return response()->json(['message' => 'Deleted the user'],200);
         }
         catch(\Exception $e){
             return response()->json(['message' => 'user not found'], 404);
@@ -203,16 +194,13 @@ class UserController extends Controller
     {
         $this->validate($request,[
             'username' => 'required|string',
-            'password' => 'required|confirmed',
+            'password' => 'required|
+                           regex:/^.*(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@&^*$#()_?><{}\-%]).*$/',
             'email' => 'required|email|unique:users'
         ]);
 
         $token = substr($request->header('Authorization'), 7);
         $request_user = User::where('auth_token', $token)->first();
-
-        if($request_user['roles'] != 'Admin'){
-            return response()->json(['message' => 'Not Authorized']);
-        }
 
         try {
             $user = new User;
@@ -227,10 +215,10 @@ class UserController extends Controller
 
             $user->save();
             
-            return response()->json(['message' => 'Added User', 'user' => $user]);
+            return response()->json(['message' => 'Added User', 'user' => $user], 201);
             
         } catch (Exception $e) {
-            return response()->json(['message' => 'not able to create user', 'error' => $e]);
+            return response()->json(['message' => 'not able to create user', 'error' => $e],400);
         }
 
 
@@ -238,14 +226,36 @@ class UserController extends Controller
 
     public function allUsers()
     {
-        $allUsers = User::all();
+        $allUsers = DB::table('users')->paginate(10);
         return response()->json(['users' => $allUsers],200);
     }
 
-    public function listUsers($method, $value)
+    public function listUsers(Request $request)
     {
-        $users = DB::table('users')->where($method , '=', $value)->get();
+        $this->validate($request,[
+            'method' => 'required',
+            'value' => 'required'
+        ]);
+        $method = $request->input('method');
+        $value = $request->input('value');
+        $users = DB::table('users')->where($method , '=', $value)->paginate(10);
         return response()->json(['users' => $users],200);
+    }
+
+    public function selfEdit(Request $request)
+    {
+        $this->validate($request,[
+            'username' => 'required',
+            'email' => 'email|required',
+        ]);
+        $token = substr($request->header('Authorization'), 7);
+        $user = User::where('auth_token', $token)->first();
+        if($user->email != $request->input('email')){
+            return response()->json(['message' => 'Can not edit other users'], 401);
+        }
+        $user->username = $request->input('username');
+        $user->save();
+        return response()->json(['message' => 'username updated'],200); 
     }
 
 }

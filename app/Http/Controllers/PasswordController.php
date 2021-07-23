@@ -12,7 +12,7 @@ class PasswordController extends Controller
 
     public function __construct()
     {
-        $this->broker = 'users';
+        // $this->broker = 'users';
     }
 
     public function postEmail(Request $request){
@@ -23,9 +23,10 @@ class PasswordController extends Controller
 	{
 		$this->validate($request, ['email' => 'required|email']);
 
-		$broker = $this->getBroker();
+		// $broker = $this->getBroker();
+		// return response()->json(['broker' => $broker]);
 
-		$response = Password::broker($broker)->sendResetLink($request->only('email'));
+		$response = Password::broker('users')->sendResetLink($request->only('email'));
         switch ($response) {
         	case Password::RESET_LINK_SENT:
         		return $this->getSendResetLinkEmailSuccessResponse($response);
@@ -37,16 +38,12 @@ class PasswordController extends Controller
 		
 	}
 
-	protected function getEmailSubject(){
-		return property_exists($this, 'subject') ? $this->subject() : 'Your Password Reset Link';
-	}
-
 	protected function getSendResetLinkEmailSuccessResponse($response){
 		return response()->json(["success" => true]);
 	}
 
 	protected function getSendResetLinkEmailFailureRespone($response){
-		return response()->json(["success" => false]);
+		return response()->json(["success" => false], 400);
 	}
 
 	public function postReset(Request $request){
@@ -58,14 +55,16 @@ class PasswordController extends Controller
 		$this->validate($request, [
 			'token' => 'required',
 			'email' => 'required|email',
-			'password' => 'required|confirmed',
+			'password' => 'required|confirmed|
+			               min:8|
+			               regex:/^.*(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@&^*$#()_?><{}\-%]).*$/',
 		]);
 
 		$credentials = $request->only('email', 'password', 'password_confirmation', 'token');
 
-		$broker = $this->getBroker();
+		// $broker = $this->getBroker();
 
-		$response = Password::broker($broker)->reset($credentials, function ($user, $password) {
+		$response = Password::broker('users')->reset($credentials, function ($user, $password) {
             $this->resetPassword($user, $password);
         });
         // dd($response);
@@ -92,10 +91,10 @@ class PasswordController extends Controller
 
 	protected function getResetFailureRespone(Request $request, $response)
 	{
-		return response()->json(['success' => false]);
+		return response()->json(['success' => false],400);
 	}
 
-	public function getBroker(){
-		return property_exists($this, 'broker') ? $this->broker : null;;
-	}
+	// public function getBroker(){
+	// 	return property_exists($this, 'broker') ? $this->broker : null;;
+	// }
 }
