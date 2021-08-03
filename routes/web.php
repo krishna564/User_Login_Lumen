@@ -13,6 +13,8 @@
 |
 */
 
+use App\Events\SendNotificationEvent;
+
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
@@ -41,3 +43,20 @@ $router->delete('users/delete/{id}', [
 $router->get('users/get/all', 'UserController@allUsers');
 $router->get('list', 'UserController@listUsers');
 $router->put('users/selfedit', 'UserController@selfEdit');
+
+
+$router->post('tasks/create', 'TaskController@createTask');
+$router->put('tasks/updatetask', 'TaskController@updateTask');
+$router->put('tasks/updatestatus', 'TaskController@updateStatus');
+$router->delete('tasks/delete/{id}', 'TaskController@deleteTask');
+$router->delete('tasks/multidelete/{id}', 'TaskController@multipleDelete');
+$router->get('tasks/createdlist', 'TaskController@createList');
+$router->get('tasks/assigneelist', 'TaskController@assigneeList');
+$router->get('tasks/alltasks', [
+    'middleware' => 'check', 'uses' => 'TaskController@allTasks'
+]);
+$router->get('tasks/filter', 'TaskController@filter');
+$router->get('tasks/filterdate', 'TaskController@filterDate');
+$router->get('/view', function(){
+    return view('verification', ['email_token' => 'hhavAARBB']);
+});

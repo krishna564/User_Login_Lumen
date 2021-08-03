@@ -13,6 +13,8 @@ use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Support\Str;
 use App\Jobs\SendVerificationEmail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailVerification; 
 class UserController extends Controller
 {
     /**
@@ -34,7 +36,7 @@ class UserController extends Controller
     public function register(Request $request){
 
         $this->validate($request,[
-            'username' => 'required|string',
+            'username' => 'required|string|unique:users',
             'password' => 'required|
                            confirmed|
                            min:8|
@@ -51,18 +53,14 @@ class UserController extends Controller
             $user->password = app('hash')->make($plain);
             $user->email_token = base64_encode('TOKEN:' . $request->input('email'));
 
-            dispatch(new SendVerificationEmail($user));
-
             $user->save();
-
-
+            $this->dispatch(new SendVerificationEmail($user));
             return response()->json(['user' => $user, 'message' => 'CREATED'], 200);
 
         } catch (\Exception $e) {
 
             return response()->json(['message' => 'User Registration Failed!',
                 'error' => $e], 409);
-            
         }
 
     }

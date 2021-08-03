@@ -1,23 +1,27 @@
 <?php
 
 namespace App\Jobs;
+use App\Models\Task;
 use App\Models\User;
-use App\Mail\EmailVerification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Mail\NewTask;
 
-class SendVerificationEmail extends Job implements ShouldQueue
+class NewTaskEmail extends Job implements ShouldQueue
 {
     /**
      * Create a new job instance.
      *
      * @return void
      */
+
+    protected $task;
     protected $user;
 
-    public function __construct(User $user)
+    public function __construct(User $user, Task $task)
     {
         //
+        $this->task = $task;
         $this->user = $user;
     }
 
@@ -29,7 +33,7 @@ class SendVerificationEmail extends Job implements ShouldQueue
     public function handle()
     {
         //
-        $email = new EmailVerification($this->user);
-        Mail::to($this->user)->send($email);
+        $email = new NewTask($this->task);
+        Mail::to($this->user->email)->send($email);
     }
 }
