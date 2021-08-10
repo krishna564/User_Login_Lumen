@@ -48,6 +48,7 @@ $router->put('users/selfedit', 'UserController@selfEdit');
 $router->post('tasks/create', 'TaskController@createTask');
 $router->put('tasks/updatetask', 'TaskController@updateTask');
 $router->put('tasks/updatestatus', 'TaskController@updateStatus');
+$router->put('tasks/multiupdate', 'TaskController@multiUpdate');
 $router->delete('tasks/delete/{id}', 'TaskController@deleteTask');
 $router->delete('tasks/multidelete/{id}', 'TaskController@multipleDelete');
 $router->get('tasks/createdlist', 'TaskController@createList');
@@ -57,6 +58,8 @@ $router->get('tasks/alltasks', [
 ]);
 $router->get('tasks/filter', 'TaskController@filter');
 $router->get('tasks/filterdate', 'TaskController@filterDate');
-$router->get('/view', function(){
-    return view('verification', ['email_token' => 'hhavAARBB']);
+$router->get('tasks/multifilter', 'TaskController@multifilter');
+$router->get('check', function ()
+{
+    return view('Example');
 });

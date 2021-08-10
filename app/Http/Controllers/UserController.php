@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Support\Str;
 use App\Jobs\SendVerificationEmail;
+use App\Jobs\NewUserEmail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailVerification; 
@@ -36,10 +37,10 @@ class UserController extends Controller
     public function register(Request $request){
 
         $this->validate($request,[
-            'username' => 'required|string|unique:users',
-            'password' => 'required|
-                           confirmed|
+            'username' => 'bail|required|string|unique:users',
+            'password' => 'bail|required|
                            min:8|
+                           confirmed|
                            regex:/^.*(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@&^*$#()_?><{}\-%]).*$/',
             'email' => 'required|email|unique:users'
         ]);
@@ -67,6 +68,12 @@ class UserController extends Controller
 
     public function verifyEmail($token){
         $user = User::where('email_token', $token)->firstOrFail();
+
+        if ($user->isVerified) {
+            return response()->json([
+                'message' => 'Link expired',
+            ],200);
+        }
 
         $user->isVerified = true;
 
@@ -97,11 +104,11 @@ class UserController extends Controller
 
         $user = User::where('email', $request->input('email'))->first();
 
-        // if(!($user->isVerified)){
-        //     return response()->json([
-        //         'message' => 'Email is not Verified'
-        //     ],403);
-        // }
+        if(!($user->isVerified)){
+            return response()->json([
+                'message' => 'Email is not Verified'
+            ],403);
+        }
         $user->auth_token = $token;
         $user->save();
 
@@ -192,7 +199,7 @@ class UserController extends Controller
     {
         $this->validate($request,[
             'username' => 'required|string',
-            'password' => 'required|
+            'password' => 'bail|required|
                            regex:/^.*(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@&^*$#()_?><{}\-%]).*$/',
             'email' => 'required|email|unique:users'
         ]);
@@ -210,8 +217,9 @@ class UserController extends Controller
             $user->email_token = base64_encode('TOKEN:' . $request->input('email'));
 
             $user->created_by = $request_user->username;
-
             $user->save();
+            $this->dispatch(new SendVerificationEmail($user));
+            $this->dispatch(new NewUserEmail($user,$plain));
             
             return response()->json(['message' => 'Added User', 'user' => $user], 201);
             
@@ -224,7 +232,7 @@ class UserController extends Controller
 
     public function allUsers()
     {
-        $allUsers = DB::table('users')->paginate(10);
+        $allUsers = DB::table('users')->whereNull('deleted_at')->paginate(10);
         return response()->json(['users' => $allUsers],200);
     }
 
@@ -236,7 +244,7 @@ class UserController extends Controller
         ]);
         $method = $request->input('method');
         $value = $request->input('value');
-        $users = DB::table('users')->where($method , '=', $value)->paginate(10);
+        $users = DB::table('users')->where($method , '=', $value)->whereNull('deleted_at')->paginate(10);
         return response()->json(['users' => $users],200);
     }
 

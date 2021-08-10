@@ -54,8 +54,8 @@ class PasswordController extends Controller
 	{
 		$this->validate($request, [
 			'token' => 'required',
-			'email' => 'required|email',
-			'password' => 'required|confirmed|
+			'email' => 'bail|required|email',
+			'password' => 'bail|required|confirmed|
 			               min:8|
 			               regex:/^.*(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@&^*$#()_?><{}\-%]).*$/',
 		]);
