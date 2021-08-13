@@ -65,7 +65,7 @@ $app->configure('auth');
 $app->configure('services');
 $app->configure('mail');
 $app->configure('cors');
-$app->configure('broadcasting');
+// $app->configure('broadcasting');
 
 $app->alias('mailer', Illuminate\Mail\Mailer::class);
 $app->alias('mailer', Illuminate\Contracts\Mail\Mailer::class);
@@ -115,7 +115,8 @@ $app->register(\Illuminate\Auth\Passwords\PasswordResetServiceProvider::class);
 $app->register(\Illuminate\Mail\MailServiceProvider::class);
 $app->register(Illuminate\Notifications\NotificationServiceProvider::class);
 $app->register(Fruitcake\Cors\CorsServiceProvider::class);
-$app->register(\Illuminate\Broadcasting\BroadcastServiceProvider::class);
+// $app->register(\Illuminate\Broadcasting\BroadcastServiceProvider::class);
+$app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes

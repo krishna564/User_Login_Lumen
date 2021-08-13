@@ -15,7 +15,6 @@ use App\Jobs\MultiDelete;
 use App\Jobs\MultiUpdateStatus;
 use Illuminate\Support\Facades\Mail;
 
-
 class TaskController extends Controller
 {
     /**
@@ -25,7 +24,7 @@ class TaskController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api');
+        $this->middleware('auth:api',['except' => 'notification']);
     }
 
     public function createTask(Request $request){
@@ -40,13 +39,11 @@ class TaskController extends Controller
         $task->description = $request->input('description');
         $task->assignee = $request->input('assignee');
         $task->due_date = $request->input('due_date');
-
+        $assignee = User::where('username', $task->assignee)->firstOrFail();
         $token = substr($request->header('Authorization'),7);
         $user = User::where('auth_token', $token)->first();
         $task->created_by = $user->username;
-        $task->user_id = $user->id;
-
-        $assignee = User::where('username', $task->assignee)->firstOrFail();
+        $task->user_id = $assignee->id;
         $task->save();
         $this->dispatch(new NewTaskEmail($assignee, $task));
 
@@ -62,7 +59,7 @@ class TaskController extends Controller
 
             $task = Task::where('id',$request->input('id'))->firstOrFail();
 
-            if ($task->user_id != $user->id) {
+            if ($task->created_by != $user->username) {
                 return response()->json(['message'=>'Only creator can update'],401);
             }
             if($request->has('title')){
@@ -80,6 +77,7 @@ class TaskController extends Controller
             $this->dispatch(new UpdateTaskEmail($assignee, $task));
 
             return response()->json(['message'=>'updated Task'],200);
+            event(new SendNotificationEvent('Your Task '.$task->id.' has been updated', $assignee->username));
         } 
         catch (Exception $e) {
             return response()->json(["message"=> "Not able to find the requested task"], 404);
@@ -101,10 +99,9 @@ class TaskController extends Controller
                 return response()->json(['message'=>'Only assignee can update status'],401);
             }
             $task->status = $request->input('status');
-            $assignee = User::where('username', $task->assignee)->firstOrFail();
-            $this->dispatch(new UpdateStatusEmail($assignee, $task));
+            $this->dispatch(new UpdateStatusEmail($user, $task));
             $task->save();
-            
+            event(new SendNotificationEvent('Your Task '.$task->id.' Status Updated to '.$task->status, $user->username));
             return response()->json(['message'=>'updated the status'],200);
         } catch (Exception $e) {
             return response()->json(['message'=>'task not found'],404);
@@ -116,7 +113,7 @@ class TaskController extends Controller
         $user = User::where('auth_token', $token)->first();
 
         $task = Task::where('id',$id)->firstOrFail();
-        if($task->user_id != $user->id){
+        if($task->created_by != $user->username){
             return response()->json(['message'=>'only creator can delete'],401);
         }
 
@@ -180,8 +177,6 @@ class TaskController extends Controller
         if($request->has('assignee') && $request->input('assignee') != ""){
             $query = $query->where('assignee','=',$request->input('assignee'));
         }
-        // $query = $query->get();
-        // dd($query);
         if($request->has('created_by') && $request->input('created_by') != ""){
             $query = $query->where('created_by','=',$request->input('created_by'));
         }
@@ -200,5 +195,9 @@ class TaskController extends Controller
             'status' => 'required',
         ]);
         $this->dispatch(new MultiUpdateStatus($request->input('id'), $request->input('status')));
+    }
+    public function notification()
+    {
+        event(new SendNotificationEvent('hello world'));
     }
 }

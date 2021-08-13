@@ -238,14 +238,29 @@ class UserController extends Controller
 
     public function listUsers(Request $request)
     {
-        $this->validate($request,[
-            'method' => 'required',
-            'value' => 'required'
-        ]);
-        $method = $request->input('method');
-        $value = $request->input('value');
-        $users = DB::table('users')->where($method , '=', $value)->whereNull('deleted_at')->paginate(10);
-        return response()->json(['users' => $users],200);
+        // $this->validate($request,[
+        //     'method' => 'required',
+        //     'value' => 'required'
+        // ]);
+        // $method = $request->input('method');
+        // $value = $request->input('value');
+        // $users = DB::table('users')->where($method , '=', $value)->whereNull('deleted_at')->paginate(10);
+        // return response()->json(['users' => $users],200);
+        $query = DB::table('users');
+        if ($request->has('id') && $request->input('id') != '') {
+            $query = $query->where('id', '=', $request->input('id'));
+        }
+        if ($request->has('email') && $request->input('email') != '') {
+            $query = $query->where('email', '=', $request->input('email'));
+        }
+        if ($request->has('username') && $request->input('username') != '') {
+            $query = $query->where('username', '=', $request->input('username'));
+        }
+        if ($request->has('roles') && $request->input('roles') != '') {
+            $query = $query->where('roles', '=', $request->input('roles'));
+        }
+        $query = $query->whereNull('deleted_at')->get();
+        return response()->json(['users'=>$query],200);
     }
 
     public function selfEdit(Request $request)

@@ -5,29 +5,19 @@ namespace App\Events;
 // use Illuminate\Foundation\Bus\Dispatchable;
 
 use Illuminate\Queue\SerializesModels;
-// use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class SendNotificationEvent implements ShouldBroadcast
+class SendNotificationEvent extends Event
 {
-  use  InteractsWithSockets, SerializesModels;
+  use SerializesModels;
 
   public $message;
+  public $username;
 
-  public function __construct($message)
+  public function __construct($message,$username)
   {
       $this->message = $message;
-      // dd($message);  
+      $this->username = $username;
   }
 
-  public function broadcastOn()
-  {
-      return new channel('my-channel');
-  }
-
-  public function broadcastAs()
-  {
-      return 'my-event';
-  }
 }

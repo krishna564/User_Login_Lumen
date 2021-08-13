@@ -63,3 +63,4 @@ $router->get('check', function ()
 {
     return view('Example');
 });
+$router->post('/notify', 'TaskController@notification');
